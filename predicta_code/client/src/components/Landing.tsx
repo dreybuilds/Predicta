@@ -2,8 +2,11 @@
 
 import { Brain, LineChart, Zap } from 'lucide-react';
 import Link from 'next/link';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function Landing() {
+  const { login, authenticated } = usePrivy();
+
   return (
     <div className="pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,41 +16,53 @@ export default function Landing() {
           </h1>
           <p className="text-xl text-white/80 mb-12 max-w-2xl mx-auto">
             Get precise market insights powered by AI analysis of real-time news and market data. 
-            Trade with confidence using Hedera's lightning-fast settlement.
+            Trade with confidence using our lightning-fast settlement system.
           </p>
           <div className="flex justify-center space-x-6">
-            <Link 
-              href="/dashboard"
-              className="px-8 py-3 bg-white text-[#01013e] rounded-lg font-semibold hover:bg-white/90 transition"
+            {authenticated ? (
+              <Link 
+                href="/dashboard"
+                className="px-8 py-3 bg-white text-[#01013e] rounded-lg font-semibold hover:bg-white/90 transition"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <button
+                onClick={() => login()}
+                className="px-8 py-3 bg-white text-[#01013e] rounded-lg font-semibold hover:bg-white/90 transition"
+              >
+                Get Started
+              </button>
+            )}
+            <Link
+              href="/learn"
+              className="px-8 py-3 bg-white/10 text-white rounded-lg font-semibold hover:bg-white/20 transition"
             >
-              Start Trading
-            </Link>
-            <button className="px-8 py-3 bg-white/10 text-white rounded-lg font-semibold hover:bg-white/20 transition">
               Learn More
-            </button>
+            </Link>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
-          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm">
-            <Brain className="h-12 w-12 mb-4" />
+          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+            <Brain className="h-12 w-12 text-indigo-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">AI Analysis</h3>
             <p className="text-white/70">
               Advanced machine learning models analyze market news and trends in real-time.
             </p>
           </div>
-          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm">
-            <LineChart className="h-12 w-12 mb-4" />
+          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+            <LineChart className="h-12 w-12 text-indigo-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Market Insights</h3>
             <p className="text-white/70">
               Get detailed market sentiment analysis and trading recommendations.
             </p>
           </div>
-          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm">
-            <Zap className="h-12 w-12 mb-4" />
+          <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+            <Zap className="h-12 w-12 text-indigo-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Fast Settlement</h3>
             <p className="text-white/70">
-              Lightning-fast transactions and settlements powered by Hedera.
+              Experience rapid and secure investment processing through our platform.
             </p>
           </div>
         </div>
@@ -59,27 +74,27 @@ export default function Landing() {
               {[
                 {
                   step: '01',
-                  title: 'Connect',
-                  description: 'Sign in with email or wallet using Privy',
+                  title: 'Sign Up',
+                  description: 'Create your account in seconds',
                 },
                 {
                   step: '02',
                   title: 'Analyze',
-                  description: 'Get AI-powered market insights and predictions',
+                  description: 'Get AI-powered market insights',
                 },
                 {
                   step: '03',
-                  title: 'Trade',
-                  description: 'Execute trades based on intelligent recommendations',
+                  title: 'Invest',
+                  description: 'Execute trades with confidence',
                 },
                 {
                   step: '04',
-                  title: 'Settle',
-                  description: 'Fast settlement via Hedera network',
+                  title: 'Track',
+                  description: 'Monitor your investment progress',
                 },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="text-4xl font-bold text-white/30 mb-4">{item.step}</div>
+                  <div className="text-4xl font-bold text-indigo-400 mb-4">{item.step}</div>
                   <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
                   <p className="text-white/70">{item.description}</p>
                 </div>
