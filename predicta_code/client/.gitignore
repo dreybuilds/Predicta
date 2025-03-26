@@ -9,7 +9,9 @@
 
 # next.js
 !/.next/routes-manifest.json
-/.next/*
+/.next/server/*
+/.next/static
+/.next/types/
 !/.next/cache
 /.next/cache/*
 !/.next/cache/webpack
