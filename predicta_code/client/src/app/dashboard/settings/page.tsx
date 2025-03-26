@@ -69,12 +69,12 @@ export default function Settings() {
               {Object.entries(notifications).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between pl-8">
                   <span className="capitalize">{key} Notifications</span>
-                  <button
+                  {/* <button
                     onClick={() => setNotifications(prev => ({ ...prev, [key]: !prev[key] }))}
                     className="relative inline-flex h-6 w-11 items-center rounded-full bg-indigo-500/20"
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-indigo-500 transition ${value ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
+                  </button> */}
                 </div>
               ))}
             </div>
