@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { PrivyProvider } from '@privy-io/react-auth';
+import Providers from '@/components/Providers';
 import Navbar from '@/components/Navbar';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -18,20 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-[#01013e] text-white`}>
-        <PrivyProvider
-          appId="YOUR_PRIVY_APP_ID"
-          config={{
-            loginMethods: ['email', 'wallet'],
-            appearance: {
-              theme: '#01013e',
-              accentColor: '#01013e',
-            },
-          }}
-        >
+      <body className={`${inter.className} min-h-screen bg-gradient-to-b from-[#01013e] to-[#02024a] text-white`}>
+        <Providers>
           <Navbar />
           {children}
-        </PrivyProvider>
+        </Providers>
       </body>
     </html>
   );
