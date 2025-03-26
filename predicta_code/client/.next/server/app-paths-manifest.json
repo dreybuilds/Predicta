@@ -1,8 +1,10 @@
 {
-  "/dashboard/trading/page": "app/dashboard/trading/page.js",
-  "/resources/page": "app/resources/page.js",
-  "/dashboard/settings/page": "app/dashboard/settings/page.js",
-  "/dashboard/portfolio/page": "app/dashboard/portfolio/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/page": "app/page.js"
+  "/dashboard/portfolio/page": "app/dashboard/portfolio/page.js",
+  "/learn/page": "app/learn/page.js",
+  "/page": "app/page.js",
+  "/resources/page": "app/resources/page.js",
+  "/dashboard/trading/page": "app/dashboard/trading/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
 }
