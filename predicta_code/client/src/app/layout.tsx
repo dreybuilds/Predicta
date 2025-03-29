@@ -22,6 +22,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
+          <ChatBot />
         </Providers>
       </body>
     </html>
