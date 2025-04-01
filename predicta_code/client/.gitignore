@@ -1,42 +1,12 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-!/.next/routes-manifest.json
-/.next/server/*
-/.next/static
-/.next/types/
-!/.next/cache
-/.next/cache/*
-!/.next/cache/webpack
-/out/
-
-# production
-/build
-/dist
-
-# misc
+node_modules
+target
+dist
+logs
+public
+.cache
+.vscode
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+.idea
+.next
+yarn-error.log
+npm-debug.log
