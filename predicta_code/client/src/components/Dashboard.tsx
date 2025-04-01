@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -11,7 +11,9 @@ import {
   DollarSign,
   Globe,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Wallet
 } from 'lucide-react';
 import axios from 'axios';
 import Link from 'next/link';
@@ -39,18 +41,21 @@ interface NewsItem {
   description: string;
   url: string;
   source: string;
+  publishedAt: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
   relatedStocks?: string[];
 }
 
 export default function Dashboard() {
   const { authenticated, user } = usePrivy();
+  const { wallets } = useWallets();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState('KES');
   const [retryCount, setRetryCount] = useState(0);
+  const [hbarBalance, setHbarBalance] = useState<number | null>(null);
   const maxRetries = 3;
 
   useEffect(() => {
@@ -59,55 +64,106 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
 
-        // Fetch predictions and news in parallel
-        const [predictionsResponse, newsResponse] = await Promise.all([
-          axios.get(`/api/v1/top-predictions?currency=${selectedCurrency}`),
-          axios.get('/api/v1/news?exchange=NSE&country=ke')
-        ]);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Process predictions
-        const processedPredictions = predictionsResponse.data.map((pred: Prediction) => ({
-          ...pred,
-          prediction: {
-            ...pred.prediction,
-            // Ensure prediction is one of the valid values
-            prediction: ['BULLISH', 'BEARISH', 'NEUTRAL'].includes(pred.prediction.prediction)
-              ? pred.prediction.prediction
-              : 'NEUTRAL'
+        // Dummy predictions data
+        const dummyPredictions: Prediction[] = [
+          {
+            symbol: "SAFCOM.NR",
+            name: "Safaricom PLC",
+            currentPrice: 15.25,
+            currentPriceFormatted: "KES 15.25",
+            prediction: {
+              prediction: "BULLISH",
+              confidence: 0.85,
+              target_price: 16.50,
+              target_price_formatted: "KES 16.50",
+              analysis: "Strong mobile money growth and positive market sentiment"
+            },
+            sector: "Telecommunications",
+            volume: 2500000,
+            marketCap: 61000000000,
+            marketCapFormatted: "KES 61B"
+          },
+          {
+            symbol: "KCB.NR",
+            name: "KCB Bank Group",
+            currentPrice: 35.80,
+            currentPriceFormatted: "KES 35.80",
+            prediction: {
+              prediction: "BULLISH",
+              confidence: 0.75,
+              target_price: 38.00,
+              target_price_formatted: "KES 38.00",
+              analysis: "Expanding regional presence and strong financial performance"
+            },
+            sector: "Banking",
+            volume: 1800000,
+            marketCap: 45000000000,
+            marketCapFormatted: "KES 45B"
+          },
+          {
+            symbol: "EQTY.NR",
+            name: "Equity Group Holdings",
+            currentPrice: 42.15,
+            currentPriceFormatted: "KES 42.15",
+            prediction: {
+              prediction: "NEUTRAL",
+              confidence: 0.60,
+              target_price: 42.50,
+              target_price_formatted: "KES 42.50",
+              analysis: "Stable performance with moderate growth potential"
+            },
+            sector: "Banking",
+            volume: 1500000,
+            marketCap: 38000000000,
+            marketCapFormatted: "KES 38B"
           }
-        }));
+        ];
 
-        // Process news and extract stock symbols
-        const processedNews = newsResponse.data.map((item: any) => {
-          // Extract stock symbols from title and description
-          const stockSymbols = extractStockSymbols(item.title + ' ' + item.description);
-          return {
-            title: item.title,
-            description: item.description,
-            url: item.url,
-            source: item.source.name,
-            sentiment: analyzeSentiment(item.title + ' ' + item.description),
-            relatedStocks: stockSymbols
-          };
-        });
+        // Dummy news data
+        const dummyNews: NewsItem[] = [
+          {
+            title: "Safaricom Reports Strong Q1 Growth",
+            description: "Safaricom's mobile money division shows 25% growth in Q1 2024, driven by increased adoption of M-PESA services.",
+            url: "https://example.com/news1",
+            source: "Business Daily",
+            publishedAt: "2024-03-20T10:00:00Z",
+            sentiment: "positive",
+            relatedStocks: ["SAFCOM.NR"]
+          },
+          {
+            title: "KCB Bank Expands to Ethiopia",
+            description: "KCB Bank Group announces successful entry into Ethiopian market with plans to open 20 branches by year-end.",
+            url: "https://example.com/news2",
+            source: "The Standard",
+            publishedAt: "2024-03-19T15:30:00Z",
+            sentiment: "positive",
+            relatedStocks: ["KCB.NR"]
+          },
+          {
+            title: "Equity Bank Launches Digital Banking Platform",
+            description: "Equity Group Holdings introduces new digital banking platform to enhance customer experience and reduce operational costs.",
+            url: "https://example.com/news3",
+            source: "Nation",
+            publishedAt: "2024-03-18T09:15:00Z",
+            sentiment: "neutral",
+            relatedStocks: ["EQTY.NR"]
+          }
+        ];
 
-        setPredictions(processedPredictions);
-        setNews(processedNews);
-        setRetryCount(0); // Reset retry count on success
+        setPredictions(dummyPredictions);
+        setNews(dummyNews);
+        setRetryCount(0);
       } catch (err) {
         console.error('Error fetching data:', err);
-        if (axios.isAxiosError(err)) {
-          const errorMessage = err.response?.data?.detail || err.message;
-          setError(`Failed to fetch data: ${errorMessage}`);
-        } else {
-          setError('Failed to fetch data. Please try again later.');
-        }
+        setError('Failed to fetch data. Please try again later.');
         
-        // Implement retry logic
         if (retryCount < maxRetries) {
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
-          }, 2000 * (retryCount + 1)); // Exponential backoff
+          }, 2000 * (retryCount + 1));
         }
       } finally {
         setLoading(false);
@@ -119,18 +175,31 @@ export default function Dashboard() {
     }
   }, [authenticated, selectedCurrency, retryCount]);
 
-  // Helper function to extract stock symbols from text
-  const extractStockSymbols = (text: string): string[] => {
-    const symbols = predictions.map(p => p.symbol.replace('.NR', ''));
-    return symbols.filter(symbol => 
-      text.toUpperCase().includes(symbol)
-    );
-  };
+  useEffect(() => {
+    const fetchHbarBalance = async () => {
+      if (!authenticated || !user?.wallet?.address) return;
+      
+      try {
+        // Get the connected wallet
+        const connectedWallet = wallets.find(w => w.address === user.wallet.address);
+        if (!connectedWallet) return;
 
-  // Helper function to analyze sentiment
-  const analyzeSentiment = (text: string): 'positive' | 'negative' | 'neutral' => {
-    const positiveWords = ['surge', 'rise', 'gain', 'up', 'positive', 'growth', 'profit', 'success'];
-    const negativeWords = ['fall', 'drop', 'down', 'negative', 'loss', 'decline', 'risk', 'concern'];
+        // Fetch balance using the wallet's provider
+        const balance = await connectedWallet.getBalance();
+        setHbarBalance(parseFloat(balance));
+      } catch (error) {
+        console.error('Error fetching HBAR balance:', error);
+        setHbarBalance(null);
+      }
+    };
+
+    fetchHbarBalance();
+  }, [authenticated, user?.wallet?.address, wallets]);
+
+  // Helper function to analyze news sentiment
+  const analyzeNewsSentiment = (text: string): 'positive' | 'negative' | 'neutral' => {
+    const positiveWords = ['surge', 'rise', 'gain', 'up', 'higher', 'positive', 'growth', 'profit', 'success'];
+    const negativeWords = ['fall', 'drop', 'down', 'lower', 'negative', 'loss', 'decline', 'risk', 'concern'];
     
     const words = text.toLowerCase().split(' ');
     const positiveCount = words.filter(word => positiveWords.includes(word)).length;
@@ -141,12 +210,31 @@ export default function Dashboard() {
     return 'neutral';
   };
 
+  // Helper function to extract related stock symbols from news text
+  const extractRelatedStocks = (text: string): string[] => {
+    const stockSymbols = predictions.map(p => p.symbol);
+    return stockSymbols.filter(symbol => 
+      text.toLowerCase().includes(symbol.toLowerCase().replace('.NR', ''))
+    );
+  };
+
+  // Helper function to get HBAR price in different currencies (replace with actual API call)
+  const getHbarPrice = (currency: string): number => {
+    const prices = {
+      'KES': 9.5,  // Example exchange rates
+      'USD': 0.07,
+      'EUR': 0.065,
+      'GBP': 0.056
+    };
+    return prices[currency as keyof typeof prices] || 0;
+  };
+
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Welcome to Predicta</h1>
-          <p className="text-gray-400">Please connect your wallet to view predictions</p>
+          <h1 className="text-4xl font-bold mb-4">Welcome to Predicta</h1>
+          <p className="text-xl text-gray-400">Please connect your wallet to view predictions</p>
         </div>
       </div>
     );
@@ -157,7 +245,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading predictions and news...</p>
+          <p className="text-xl">Loading predictions...</p>
         </div>
       </div>
     );
@@ -168,10 +256,11 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-400 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold mb-2">Error</h2>
+          <p className="text-gray-400">{error}</p>
           <button 
             onClick={() => setRetryCount(0)}
-            className="px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors"
+            className="mt-4 px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors"
           >
             Retry
           </button>
@@ -202,14 +291,40 @@ export default function Dashboard() {
                 <option value="EUR">EUR</option>
                 <option value="GBP">GBP</option>
               </select>
-              <button className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 transition-colors flex items-center">
-                <Globe className="h-5 w-5 mr-2" />
-                {user?.wallet?.address?.slice(0, 6)}...{user?.wallet?.address?.slice(-4)}
-              </button>
+              <Link
+                href="/dashboard/chat"
+                className="p-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 transition-colors flex items-center group relative"
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Open AI Chat
+                </span>
+              </Link>
+              <div className="px-4 py-2 rounded-lg bg-indigo-500 flex items-center">
+                <Wallet className="h-5 w-5 mr-2" />
+                {hbarBalance !== null ? (
+                  <span>{hbarBalance.toFixed(2)} ℏ</span>
+                ) : (
+                  <span>Loading...</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </nav>
+
+      {/* Fixed Floating Chatbot Button (visible on scroll) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Link
+          href="/dashboard/chat"
+          className="p-4 rounded-full bg-indigo-500 hover:bg-indigo-600 transition-colors flex items-center shadow-lg group relative"
+        >
+          <MessageSquare className="h-6 w-6" />
+          <span className="absolute -top-10 right-0 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            Chat with AI Assistant
+          </span>
+        </Link>
+      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -223,7 +338,7 @@ export default function Dashboard() {
                   <h2 className="text-xl font-semibold">Top 10 AI Predictions</h2>
                 </div>
                 <Link 
-                  href="/trading"
+                  href="dashboard/trading"
                   className="px-4 py-2 bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors flex items-center"
                 >
                   Trade Now

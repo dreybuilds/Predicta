@@ -19,11 +19,15 @@ import axios from 'axios';
 interface Stock {
   symbol: string;
   name: string;
-  sector: string;
-  lastPrice: number;
+  currentPrice: number;
+  currentPriceFormatted: string;
   change: number;
+  changePercent: number;
   volume: number;
   marketCap: number;
+  marketCapFormatted: string;
+  sector: string;
+  lastUpdated: string;
 }
 
 interface Transaction {
@@ -46,37 +50,131 @@ export default function TradingDashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [slippage, setSlippage] = useState(0.5);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSector, setSelectedSector] = useState<string | null>(null);
-  const [minPrice, setMinPrice] = useState<number | null>(null);
-  const [maxPrice, setMaxPrice] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<'symbol' | 'price' | 'volume'>('symbol');
+  const [selectedSector, setSelectedSector] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showStockModal, setShowStockModal] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState('KES');
 
   useEffect(() => {
     const fetchStocks = async () => {
       try {
-        const params = new URLSearchParams();
-        if (searchQuery) params.append('search', searchQuery);
-        if (selectedSector) params.append('sector', selectedSector);
-        if (minPrice) params.append('min_price', minPrice.toString());
-        if (maxPrice) params.append('max_price', maxPrice.toString());
-        params.append('sort_by', sortBy);
-        params.append('sort_order', sortOrder);
+        setLoading(true);
+        setError(null);
 
-        const response = await axios.get(`/api/v1/stocks?${params.toString()}`);
-        setStocks(response.data);
-        if (response.data.length > 0 && !selectedStock) {
-          setSelectedStock(response.data[0]);
-        }
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Dummy stocks data
+        const dummyStocks: Stock[] = [
+          {
+            symbol: "SAFCOM.NR",
+            name: "Safaricom PLC",
+            currentPrice: 15.25,
+            currentPriceFormatted: "KES 15.25",
+            change: 0.75,
+            changePercent: 5.17,
+            volume: 2500000,
+            marketCap: 61000000000,
+            marketCapFormatted: "KES 61B",
+            sector: "Telecommunications",
+            lastUpdated: new Date().toISOString()
+          },
+          {
+            symbol: "KCB.NR",
+            name: "KCB Bank Group",
+            currentPrice: 35.80,
+            currentPriceFormatted: "KES 35.80",
+            change: -0.20,
+            changePercent: -0.56,
+            volume: 1800000,
+            marketCap: 45000000000,
+            marketCapFormatted: "KES 45B",
+            sector: "Banking",
+            lastUpdated: new Date().toISOString()
+          },
+          {
+            symbol: "EQTY.NR",
+            name: "Equity Group Holdings",
+            currentPrice: 42.15,
+            currentPriceFormatted: "KES 42.15",
+            change: 0.15,
+            changePercent: 0.36,
+            volume: 1500000,
+            marketCap: 38000000000,
+            marketCapFormatted: "KES 38B",
+            sector: "Banking",
+            lastUpdated: new Date().toISOString()
+          },
+          {
+            symbol: "EABL.NR",
+            name: "East African Breweries",
+            currentPrice: 165.00,
+            currentPriceFormatted: "KES 165.00",
+            change: 2.50,
+            changePercent: 1.54,
+            volume: 800000,
+            marketCap: 28000000000,
+            marketCapFormatted: "KES 28B",
+            sector: "Consumer Goods",
+            lastUpdated: new Date().toISOString()
+          },
+          {
+            symbol: "KPLC.NR",
+            name: "Kenya Power",
+            currentPrice: 2.15,
+            currentPriceFormatted: "KES 2.15",
+            change: -0.05,
+            changePercent: -2.27,
+            volume: 1200000,
+            marketCap: 15000000000,
+            marketCapFormatted: "KES 15B",
+            sector: "Utilities",
+            lastUpdated: new Date().toISOString()
+          }
+        ];
+
+        // Apply filters
+        let filteredStocks = dummyStocks.filter(stock => {
+          const matchesSearch = stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              stock.symbol.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesSector = !selectedSector || stock.sector === selectedSector;
+          const matchesPriceRange = (!minPrice || stock.currentPrice >= parseFloat(minPrice)) &&
+                                  (!maxPrice || stock.currentPrice <= parseFloat(maxPrice));
+          return matchesSearch && matchesSector && matchesPriceRange;
+        });
+
+        // Apply sorting
+        filteredStocks.sort((a, b) => {
+          let comparison = 0;
+          switch (sortBy) {
+            case 'name':
+              comparison = a.name.localeCompare(b.name);
+              break;
+            case 'price':
+              comparison = a.currentPrice - b.currentPrice;
+              break;
+            case 'change':
+              comparison = a.changePercent - b.changePercent;
+              break;
+            case 'volume':
+              comparison = a.volume - b.volume;
+              break;
+            case 'marketCap':
+              comparison = a.marketCap - b.marketCap;
+              break;
+            default:
+              comparison = 0;
+          }
+          return sortOrder === 'asc' ? comparison : -comparison;
+        });
+
+        setStocks(filteredStocks);
       } catch (err) {
-        if (axios.isAxiosError(err)) {
-          const errorMessage = err.response?.data?.detail || err.message;
-          setError(`Failed to fetch NSE stocks: ${errorMessage}`);
-        } else {
-          setError('Failed to fetch NSE stocks. Please try again later.');
-        }
         console.error('Error fetching stocks:', err);
+        setError('Failed to fetch stocks. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -199,7 +297,7 @@ export default function TradingDashboard() {
                   />
                   <select
                     value={selectedSector || ''}
-                    onChange={(e) => setSelectedSector(e.target.value || null)}
+                    onChange={(e) => setSelectedSector(e.target.value || '')}
                     className="bg-white/5 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">All Sectors</option>
@@ -213,25 +311,27 @@ export default function TradingDashboard() {
                   <input
                     type="number"
                     value={minPrice || ''}
-                    onChange={(e) => setMinPrice(e.target.value ? parseFloat(e.target.value) : null)}
+                    onChange={(e) => setMinPrice(e.target.value || '')}
                     placeholder="Min Price"
                     className="flex-1 bg-white/5 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <input
                     type="number"
                     value={maxPrice || ''}
-                    onChange={(e) => setMaxPrice(e.target.value ? parseFloat(e.target.value) : null)}
+                    onChange={(e) => setMaxPrice(e.target.value || '')}
                     placeholder="Max Price"
                     className="flex-1 bg-white/5 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'symbol' | 'price' | 'volume')}
+                    onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'change' | 'volume' | 'marketCap')}
                     className="bg-white/5 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <option value="symbol">Symbol</option>
+                    <option value="name">Name</option>
                     <option value="price">Price</option>
+                    <option value="change">Change</option>
                     <option value="volume">Volume</option>
+                    <option value="marketCap">Market Cap</option>
                   </select>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
@@ -404,7 +504,7 @@ export default function TradingDashboard() {
                       <div className="text-sm text-gray-400">{stock.name}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">KES {stock.lastPrice.toFixed(2)}</div>
+                      <div className="font-semibold">KES {stock.currentPrice.toFixed(2)}</div>
                       <div className={`text-sm ${stock.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {stock.change >= 0 ? '+' : ''}{stock.change}%
                       </div>
