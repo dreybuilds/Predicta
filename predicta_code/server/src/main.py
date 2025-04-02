@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import stock_data, news, predictions
+from .routes import stock_data, news, predictions, chatbot
 from dotenv import load_dotenv
 import os
 import yfinance as yf
@@ -34,6 +34,7 @@ app.add_middleware(
 app.include_router(stock_data.router, prefix="/api/v1", tags=["stock_data"])
 app.include_router(news.router, prefix="/api/v1", tags=["news"])
 app.include_router(predictions.router, prefix="/api/v1", tags=["predictions"])
+app.include_router(chatbot.router, prefix="/api/v1", tags=["chatbot"])
 
 @app.get("/")
 async def root():

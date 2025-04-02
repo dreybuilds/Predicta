@@ -1,6 +1,10 @@
 import http from 'http';
+import dotenv from 'dotenv';
 import { validateConfig, PORT, HOST } from './config.js';
 import { AgentService } from './services/agent.service.js';
+
+// Load environment variables first
+dotenv.config();
 
 // Validate environment configuration
 validateConfig();

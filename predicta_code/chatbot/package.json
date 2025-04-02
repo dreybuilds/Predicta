@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.41.0",
-    "@langchain/core": "^0.1.17",
-    "@langchain/openai": "^0.0.12",
+    "@langchain/core": "0.1.17",
+    "@langchain/openai": "0.0.12",
     "dotenv": "^16.3.1",
     "hedera-agent-kit": "latest",
-    "langchain": "^0.1.12",
+    "langchain": "0.1.12",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },

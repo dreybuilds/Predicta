@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { 
   ArrowUpRight, 
@@ -13,7 +13,9 @@ import {
   ArrowRight,
   AlertCircle,
   MessageSquare,
-  Wallet
+  Wallet,
+  X,
+  Send
 } from 'lucide-react';
 import axios from 'axios';
 import Link from 'next/link';
@@ -46,6 +48,12 @@ interface NewsItem {
   relatedStocks?: string[];
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 export default function Dashboard() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
@@ -56,6 +64,11 @@ export default function Dashboard() {
   const [selectedCurrency, setSelectedCurrency] = useState('KES');
   const [retryCount, setRetryCount] = useState(0);
   const [hbarBalance, setHbarBalance] = useState<number | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const maxRetries = 3;
 
   useEffect(() => {
@@ -196,6 +209,58 @@ export default function Dashboard() {
     fetchHbarBalance();
   }, [authenticated, user?.wallet?.address, wallets]);
 
+  useEffect(() => {
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentMessage.trim()) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: currentMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessage('');
+    setIsTyping(true);
+
+    try {
+      // Replace with your actual API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: currentMessage }),
+      });
+
+      const data = await response.json();
+      
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: data.response || 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   // Helper function to analyze news sentiment
   const analyzeNewsSentiment = (text: string): 'positive' | 'negative' | 'neutral' => {
     const positiveWords = ['surge', 'rise', 'gain', 'up', 'higher', 'positive', 'growth', 'profit', 'success'];
@@ -313,17 +378,86 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Fixed Floating Chatbot Button (visible on scroll) */}
+      {/* Floating Chat Button and Chat Window */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Link
-          href="/dashboard/chat"
+        <button
+          onClick={() => setIsChatOpen(true)}
           className="p-4 rounded-full bg-indigo-500 hover:bg-indigo-600 transition-colors flex items-center shadow-lg group relative"
         >
           <MessageSquare className="h-6 w-6" />
           <span className="absolute -top-10 right-0 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
             Chat with AI Assistant
           </span>
-        </Link>
+        </button>
+
+        {/* Chat Window */}
+        <div className={`fixed bottom-24 right-6 w-96 bg-gray-900 rounded-lg shadow-xl border border-white/10 transition-all duration-300 transform ${isChatOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0 pointer-events-none'}`}>
+          {/* Chat Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="flex items-center">
+              <MessageSquare className="h-5 w-5 text-indigo-400 mr-2" />
+              <h3 className="font-semibold">AI Assistant</h3>
+            </div>
+            <button 
+              onClick={() => setIsChatOpen(false)}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Chat Messages */}
+          <div className="h-96 overflow-y-auto p-4 space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[80%] rounded-lg p-3 ${
+                  message.role === 'user' 
+                    ? 'bg-indigo-500 text-white' 
+                    : 'bg-white/10 text-gray-200'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <span className="text-xs text-gray-400 mt-1 block">
+                    {message.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Chat Input */}
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-white/10">
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={currentMessage}
+                onChange={(e) => setCurrentMessage(e.target.value)}
+                placeholder="Ask about stocks, predictions, or market sentiment..."
+                className="flex-1 bg-white/5 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="submit"
+                className="bg-indigo-500 hover:bg-indigo-600 rounded-lg px-4 py-2 transition-colors"
+              >
+                <Send className="h-5 w-5" />
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* Main Content */}
