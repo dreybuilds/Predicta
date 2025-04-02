@@ -194,12 +194,11 @@ export default function Dashboard() {
       
       try {
         // Get the connected wallet
-        const connectedWallet = wallets.find(w => w.address === user.wallet.address);
+        const connectedWallet = wallets.find(w => w.address === user?.wallet?.address);
         if (!connectedWallet) return;
 
-        // Fetch balance using the wallet's provider
-        const balance = await connectedWallet.getBalance();
-        setHbarBalance(parseFloat(balance));
+        // For now, we'll set a placeholder balance since we need to implement proper HBAR balance fetching
+        setHbarBalance(0);
       } catch (error) {
         console.error('Error fetching HBAR balance:', error);
         setHbarBalance(null);
@@ -207,7 +206,7 @@ export default function Dashboard() {
     };
 
     fetchHbarBalance();
-  }, [authenticated, user?.wallet?.address, wallets]);
+  }, [authenticated, user, wallets]);
 
   useEffect(() => {
     const scrollToBottom = () => {
@@ -337,7 +336,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* Top Navigation Bar */}
-      <nav className="border-b border-white/10 bg-black/50 backdrop-blur-lg">
+      <nav className="border-b border-white/10 bg-black/50 backdrop-blur-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -365,10 +364,10 @@ export default function Dashboard() {
                   Open AI Chat
                 </span>
               </Link>
-              <div className="px-4 py-2 rounded-lg bg-indigo-500 flex items-center">
+              <div className="px-4 py-2 rounded-lg bg-indigo-500 flex items-center min-w-[120px] justify-center">
                 <Wallet className="h-5 w-5 mr-2" />
                 {hbarBalance !== null ? (
-                  <span>{hbarBalance.toFixed(2)} ℏ</span>
+                  <span className="truncate">{hbarBalance.toFixed(2)} ℏ</span>
                 ) : (
                   <span>Loading...</span>
                 )}
